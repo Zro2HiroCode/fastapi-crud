@@ -30,8 +30,11 @@ jobs:
       run: |
         pip install flake8
         flake8 .
+        echo "Linting completed"
 
     - name: Run tests
       run: |
         pip install pytest
+        pytest --collect-only
         pytest
+        echo "Testing completed"
