@@ -4,7 +4,7 @@ from typing import List
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, SessionLocal, get_db
-from models import Base, Ingredient
+from models import Base, RecipeCost
 
 # สร้างตารางในฐานข้อมูล
 Base.metadata.create_all(bind=engine)
@@ -22,51 +22,53 @@ app.add_middleware(
 )
 
 # โมเดล Pydantic
-class IngredientBase(BaseModel):
-    name: str
-    unit: str
-    price_per_unit: float
-    create_at: float
+class RecipeCostBase(BaseModel):
+    list: str
+    weight: str
+    unit_pkg: str
+    price: float
+    quantity: float
+    cost: float
 
-class IngredientCreate(IngredientBase):
+class RecipeCostCreate(RecipeCostBase):
     pass
 
-class IngredientResponse(IngredientBase):
+class RecipeCostResponse(RecipeCostBase):
     id: int
 
     class Config:
         orm_mode = True
 
-# การดำเนินการ CRUD สำหรับ Ingredient
-@app.post("/ingredients/", response_model=IngredientResponse)
-def create_ingredient(ingredient: IngredientCreate, db: Session = Depends(get_db)):
-    db_ingredient = Ingredient(**ingredient.dict())
-    db.add(db_ingredient)
+# การดำเนินการ CRUD สำหรับ RecipeCost
+@app.post("/RecipeCosts/", response_model=RecipeCostResponse)
+def create_RecipeCost(RecipeCost: RecipeCostCreate, db: Session = Depends(get_db)):
+    db_RecipeCost = RecipeCost(**RecipeCost.dict())
+    db.add(db_RecipeCost)
     db.commit()
-    db.refresh(db_ingredient)
-    return db_ingredient
+    db.refresh(db_RecipeCost)
+    return db_RecipeCost
 
-@app.get("/ingredients/", response_model=List[IngredientResponse])
-def read_ingredients(db: Session = Depends(get_db)):
-    ingredients = db.query(Ingredient).all()
-    return ingredients
+@app.get("/RecipeCosts/", response_model=List[RecipeCostResponse])
+def read_RecipeCosts(db: Session = Depends(get_db)):
+    RecipeCosts = db.query(RecipeCost).all()
+    return RecipeCosts
 
-@app.put("/ingredients/{ingredient_id}", response_model=IngredientResponse)
-def update_ingredient(ingredient_id: int, updated_ingredient: IngredientCreate, db: Session = Depends(get_db)):
-    ingredient = db.query(Ingredient).filter(Ingredient.id == ingredient_id).first()
-    if not ingredient:
+@app.put("/RecipeCosts/{RecipeCost_id}", response_model=RecipeCostResponse)
+def update_RecipeCost(RecipeCost_id: int, updated_RecipeCost: RecipeCostCreate, db: Session = Depends(get_db)):
+    RecipeCost = db.query(RecipeCost).filter(RecipeCost.id == RecipeCost_id).first()
+    if not RecipeCost:
         raise HTTPException(status_code=404, detail="ไม่พบส่วนผสม")
-    for key, value in updated_ingredient.dict().items():
-        setattr(ingredient, key, value)
+    for key, value in updated_RecipeCost.dict().items():
+        setattr(RecipeCost, key, value)
     db.commit()
-    db.refresh(ingredient)
-    return ingredient
+    db.refresh(RecipeCost)
+    return RecipeCost
 
-@app.delete("/ingredients/{ingredient_id}")
-def delete_ingredient(ingredient_id: int, db: Session = Depends(get_db)):
-    ingredient = db.query(Ingredient).filter(Ingredient.id == ingredient_id).first()
-    if not ingredient:
+@app.delete("/RecipeCosts/{RecipeCost_id}")
+def delete_RecipeCost(RecipeCost_id: int, db: Session = Depends(get_db)):
+    RecipeCost = db.query(RecipeCost).filter(RecipeCost.id == RecipeCost_id).first()
+    if not RecipeCost:
         raise HTTPException(status_code=404, detail="ไม่พบส่วนผสม")
-    db.delete(ingredient)
+    db.delete(RecipeCost)
     db.commit()
     return {"detail": "ลบส่วนผสมแล้ว"}
