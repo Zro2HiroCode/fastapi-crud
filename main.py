@@ -24,7 +24,7 @@ app.add_middleware(
 # โมเดล Pydantic
 class RecipeCostBase(BaseModel):
     list: str
-    weight: str
+    weight: int
     unit_pkg: str
     price: float
     quantity: float
@@ -39,36 +39,52 @@ class RecipeCostResponse(RecipeCostBase):
     class Config:
         orm_mode = True
 
+# ฟังก์ชันทดสอบการเชื่อมต่อฐานข้อมูล
+@app.get("/test_db_connection")
+def test_db_connection(db: Session = Depends(get_db)):
+    try:
+        db.execute("SELECT 1")
+        return {"detail": "Database connection successful"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # การดำเนินการ CRUD สำหรับ RecipeCost
-@app.post("/RecipeCosts/", response_model=RecipeCostResponse)
-def create_RecipeCost(RecipeCost: RecipeCostCreate, db: Session = Depends(get_db)):
-    db_RecipeCost = RecipeCost(**RecipeCost.dict())
-    db.add(db_RecipeCost)
+@app.post("/recipes_cost/", response_model=RecipeCostResponse)
+def create_recipe_cost(recipe: RecipeCostCreate, db: Session = Depends(get_db)):
+    db_recipe_cost = RecipeCost(**recipe.dict())
+    db.add(db_recipe_cost)
     db.commit()
-    db.refresh(db_RecipeCost)
-    return db_RecipeCost
+    db.refresh(db_recipe_cost)
+    return db_recipe_cost
 
-@app.get("/RecipeCosts/", response_model=List[RecipeCostResponse])
-def read_RecipeCosts(db: Session = Depends(get_db)):
-    RecipeCosts = db.query(RecipeCost).all()
-    return RecipeCosts
+@app.get("/recipes_cost/", response_model=List[RecipeCostResponse])
+def read_recipes_cost(db: Session = Depends(get_db)):
+    recipes_cost = db.query(RecipeCost).all()
+    return recipes_cost
 
-@app.put("/RecipeCosts/{RecipeCost_id}", response_model=RecipeCostResponse)
-def update_RecipeCost(RecipeCost_id: int, updated_RecipeCost: RecipeCostCreate, db: Session = Depends(get_db)):
-    RecipeCost = db.query(RecipeCost).filter(RecipeCost.id == RecipeCost_id).first()
-    if not RecipeCost:
-        raise HTTPException(status_code=404, detail="ไม่พบส่วนผสม")
-    for key, value in updated_RecipeCost.dict().items():
-        setattr(RecipeCost, key, value)
+@app.get("/recipes_cost/{recipe_id}", response_model=RecipeCostResponse)
+def read_recipe_cost(recipe_id: int, db: Session = Depends(get_db)):
+    db_recipe_cost = db.query(RecipeCost).filter(RecipeCost.id == recipe_id).first()
+    if not db_recipe_cost:
+        raise HTTPException(status_code=404, detail="ไม่พบสูตรอาหาร")
+    return db_recipe_cost
+
+@app.put("/recipes_cost/{recipe_id}", response_model=RecipeCostResponse)
+def update_recipe_cost(recipe_id: int, updated_recipe: RecipeCostCreate, db: Session = Depends(get_db)):
+    db_recipe_cost = db.query(RecipeCost).filter(RecipeCost.id == recipe_id).first()
+    if not db_recipe_cost:
+        raise HTTPException(status_code=404, detail="ไม่พบสูตรอาหาร")
+    for key, value in updated_recipe.dict().items():
+        setattr(db_recipe_cost, key, value)
     db.commit()
-    db.refresh(RecipeCost)
-    return RecipeCost
+    db.refresh(db_recipe_cost)
+    return db_recipe_cost
 
-@app.delete("/RecipeCosts/{RecipeCost_id}")
-def delete_RecipeCost(RecipeCost_id: int, db: Session = Depends(get_db)):
-    RecipeCost = db.query(RecipeCost).filter(RecipeCost.id == RecipeCost_id).first()
-    if not RecipeCost:
-        raise HTTPException(status_code=404, detail="ไม่พบส่วนผสม")
-    db.delete(RecipeCost)
+@app.delete("/recipes_cost/{recipe_id}")
+def delete_recipe_cost(recipe_id: int, db: Session = Depends(get_db)):
+    db_recipe_cost = db.query(RecipeCost).filter(RecipeCost.id == recipe_id).first()
+    if not db_recipe_cost:
+        raise HTTPException(status_code=404, detail="ไม่พบสูตรอาหาร")
+    db.delete(db_recipe_cost)
     db.commit()
-    return {"detail": "ลบส่วนผสมแล้ว"}
+    return {"detail": "Recipe deleted successfully"}
