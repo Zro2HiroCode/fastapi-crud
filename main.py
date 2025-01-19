@@ -39,14 +39,14 @@ class RecipeCostResponse(RecipeCostBase):
     class Config:
         orm_mode = True
 
-# ฟังก์ชันทดสอบการเชื่อมต่อฐานข้อมูล
-@app.get("/test_db_connection")
-def test_db_connection(db: Session = Depends(get_db)):
-    try:
-        db.execute("SELECT 1")
-        return {"detail": "Database connection successful"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# # ฟังก์ชันทดสอบการเชื่อมต่อฐานข้อมูล
+# @app.get("/test_db_connection")
+# def test_db_connection(db: Session = Depends(get_db)):
+#     try:
+#         db.execute("SELECT 1")
+#         return {"detail": "Database connection successful"}
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
 # การดำเนินการ CRUD สำหรับ RecipeCost
 @app.post("/recipes_cost/", response_model=RecipeCostResponse)
@@ -62,12 +62,12 @@ def read_recipes_cost(db: Session = Depends(get_db)):
     recipes_cost = db.query(RecipeCost).all()
     return recipes_cost
 
-@app.get("/recipes_cost/{recipe_id}", response_model=RecipeCostResponse)
-def read_recipe_cost(recipe_id: int, db: Session = Depends(get_db)):
-    db_recipe_cost = db.query(RecipeCost).filter(RecipeCost.id == recipe_id).first()
-    if not db_recipe_cost:
-        raise HTTPException(status_code=404, detail="ไม่พบสูตรอาหาร")
-    return db_recipe_cost
+# @app.get("/recipes_cost/{recipe_id}", response_model=RecipeCostResponse)
+# def read_recipe_cost(recipe_id: int, db: Session = Depends(get_db)):
+#     db_recipe_cost = db.query(RecipeCost).filter(RecipeCost.id == recipe_id).first()
+#     if not db_recipe_cost:
+#         raise HTTPException(status_code=404, detail="ไม่พบสูตรอาหาร")
+#     return db_recipe_cost
 
 @app.put("/recipes_cost/{recipe_id}", response_model=RecipeCostResponse)
 def update_recipe_cost(recipe_id: int, updated_recipe: RecipeCostCreate, db: Session = Depends(get_db)):
